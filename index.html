@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Home Improvement Scorecard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f4f6f9; --panel: #ffffff; --ink: #14202e; --ink-2: #3c4a5a; --muted: #6b7887; --line: #e2e7ee; --line-2: #eef1f5;
+    --navy: #0d2b4e; --navy-2: #1f4e79; --blue: #2e75b6; --blue-soft: #eaf2fa;
+    --green: #1b7a4a; --green-soft: #e8f5ee; --red: #b42318; --red-soft: #fdecea; --amber: #a15c00; --amber-soft: #fff4e0;
+    --shadow: 0 1px 2px rgba(16, 32, 52, .06), 0 2px 8px rgba(16, 32, 52, .04);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 "Segoe UI", "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  .num, td.num, .figure { font-variant-numeric: tabular-nums; }
+
+  /* ---------- header ---------- */
+  .topbar { background: var(--navy); color: #fff; }
+  .topbar .inner { max-width: 1240px; margin: 0 auto; padding: 18px 20px; display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; }
+  .brand small { display: block; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: #9fbbd8; }
+  .brand h1 { margin: 2px 0 0; font-size: 20px; font-weight: 600; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fact { border: 1px solid rgba(255,255,255,.18); border-radius: 6px; padding: 5px 10px; font-size: 12px; color: #d6e3f0; }
+  .fact b { color: #fff; font-weight: 600; }
+
+  main { max-width: 1240px; margin: 0 auto; padding: 18px 20px 40px; }
+
+  /* ---------- presets ---------- */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .toolbar .lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-right: 4px; }
+  .chip { font: inherit; font-size: 13px; background: var(--panel); color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow); }
+  .chip:hover { border-color: var(--blue); color: var(--ink); }
+  .chip.active { border-color: var(--navy-2); background: var(--blue-soft); color: var(--navy); font-weight: 600; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  /* ---------- layout ---------- */
+  .grid { display: grid; grid-template-columns: minmax(320px, 410px) 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 920px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+  .card-h { padding: 14px 18px; border-bottom: 1px solid var(--line-2); display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .card-h h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .card-h .step { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .card-b { padding: 14px 18px 16px; }
+  .full { margin-top: 16px; }
+
+  /* ---------- form ---------- */
+  .group { padding: 12px 0 4px; border-top: 1px solid var(--line-2); }
+  .group:first-child { border-top: 0; padding-top: 0; }
+  .group-t { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--navy-2); margin-bottom: 8px; }
+  .field { margin-bottom: 10px; }
+  .field > span { display: block; font-size: 12.5px; color: var(--ink-2); margin-bottom: 3px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  input[type=number], input[type=text], select { width: 100%; font: inherit; color: var(--ink); background: #fff; border: 1px solid #cfd7e1; border-radius: 6px; padding: 7px 9px; transition: border-color .15s, box-shadow .15s; }
+  input:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,117,182,.15); }
+  input:disabled, select:disabled { background: #f3f5f8; color: #a0abb8; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); margin: -2px 0 10px; cursor: pointer; }
+  .check input { width: 15px; height: 15px; accent-color: var(--navy-2); }
+  .derived { display: flex; justify-content: space-between; font-size: 12px; background: var(--blue-soft); color: var(--navy-2); border-radius: 6px; padding: 5px 9px; margin: -2px 0 10px; }
+  .derived b { font-weight: 600; }
+  .alert { font-size: 12.5px; border-radius: 6px; padding: 7px 10px; margin-bottom: 8px; background: var(--amber-soft); color: var(--amber); border: 1px solid #f3dcb0; }
+  .hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+  /* ---------- decision ---------- */
+  .decision { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; padding: 18px; border-radius: 8px; border: 1px solid; }
+  .decision.approve { background: var(--green-soft); border-color: #bfe3cf; }
+  .decision.decline { background: var(--red-soft); border-color: #f4c7c2; }
+  .score-big { font-size: 46px; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+  .score-big small { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .verdict { font-size: 13px; color: var(--ink-2); }
+  .verdict b { display: inline-block; font-size: 13px; letter-spacing: .08em; padding: 3px 10px; border-radius: 4px; color: #fff; margin-bottom: 6px; }
+  .approve .verdict b { background: var(--green); } .decline .verdict b { background: var(--red); }
+  .approve .score-big { color: var(--green); } .decline .score-big { color: var(--red); }
+  .gapbox { text-align: right; }
+  .gapbox .figure { font-size: 22px; font-weight: 700; }
+  .gapbox small { display: block; font-size: 11.5px; color: var(--muted); }
+
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 6px; }
+  @media (max-width: 640px) { .metrics { grid-template-columns: 1fr 1fr; } }
+  .metric { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .metric small { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+  .metric .figure { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .metric .sub { font-size: 11.5px; color: var(--muted); }
+
+  .chart-t { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin: 14px 0 4px; display: flex; justify-content: space-between; }
+  .chart-t span { font-weight: 400; color: var(--muted); }
+  svg text { font: 11px "Segoe UI", Arial, sans-serif; fill: var(--muted); }
+
+  /* ---------- table ---------- */
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 9px 10px; border-bottom: 1px solid var(--line); background: #fafbfd; white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+  tbody tr:hover td { background: #fafcfe; }
+  th.num, td.num { text-align: right; white-space: nowrap; }
+  td .code { display: block; font-size: 11px; color: var(--muted); font-family: Consolas, "Courier New", monospace; }
+  .bin { display: inline-block; background: var(--line-2); border-radius: 4px; padding: 1px 7px; font-size: 12.5px; }
+  .pts { font-weight: 700; font-size: 14px; }
+  .barcell { width: 120px; }
+  .bar { position: relative; height: 8px; background: var(--line-2); border-radius: 4px; margin-top: 6px; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--blue); border-radius: 4px; }
+  .lost { color: var(--red); } .best { color: var(--green); font-weight: 600; }
+  .why { color: var(--ink-2); font-size: 12.5px; }
+  .why .br { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  tfoot td { font-weight: 700; border-top: 2px solid var(--ink); border-bottom: 0; background: #fafbfd; }
+
+  /* ---------- method ---------- */
+  .method { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 920px) { .method { grid-template-columns: 1fr; } }
+  .steps { margin: 0; padding-left: 18px; color: var(--ink-2); }
+  .steps li { margin-bottom: 6px; }
+  pre.calc { margin: 0; background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: 12.5px/1.55 Consolas, "Courier New", monospace; color: var(--ink); overflow-x: auto; }
+  .kv { width: 100%; font-size: 12.5px; margin-top: 10px; }
+  .kv td { padding: 5px 0; border-bottom: 1px solid var(--line-2); }
+  .kv td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .foot { font-size: 12px; color: var(--muted); margin-top: 14px; }
+  .sub-t { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--navy-2); margin-bottom: 6px; }
+  .kv2 { width: 100%; font-size: 13px; border-collapse: collapse; }
+  .kv2 td { padding: 7px 0; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+  .kv2 td:first-child { color: var(--ink-2); padding-right: 12px; }
+  .kv2 td .f { display: block; font-size: 11.5px; color: var(--muted); font-family: Consolas, "Courier New", monospace; margin-top: 2px; }
+  .kv2 td:last-child { text-align: right; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .kv2 tr.total td { border-top: 2px solid var(--ink); border-bottom: 0; font-weight: 700; color: var(--ink); }
+  .kv2 .neg { color: var(--red); } .kv2 .pos { color: var(--green); }
+  tr.here td { background: var(--blue-soft); font-weight: 600; }
+  tr.cut td { border-top: 2px dashed var(--ink); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 4px; padding: 1px 7px; white-space: nowrap; }
+  .tag.you { background: var(--blue); color: #fff; } .tag.cutoff { background: var(--ink); color: #fff; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="inner">
+    <div class="brand">
+      <small>IS453 Group Assignment &middot; Credit scorecard</small>
+      <h1>Home Improvement Loan Scorecard</h1>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>11</b> characteristics</div>
+      <div class="fact">Cutoff <b>600</b></div>
+      <div class="fact">600 = odds <b>1 : 9.72</b></div>
+      <div class="fact">PDO <b>20</b></div>
+      <div class="fact">Test AUC <b>0.670</b></div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="toolbar">
+    <span class="lbl">Example applications</span>
+    <button class="chip" data-preset="approved"><i class="dot" style="background:var(--green)"></i>Approved</button>
+    <button class="chip" data-preset="borderline"><i class="dot" style="background:var(--amber)"></i>Borderline</button>
+    <button class="chip" data-preset="declined"><i class="dot" style="background:var(--red)"></i>Declined</button>
+    <button class="chip" data-preset="thin"><i class="dot" style="background:var(--muted)"></i>No bureau history</button>
+  </div>
+
+  <div class="grid">
+    <!-- ======================= FORM ======================= -->
+    <section class="card" aria-label="Application form">
+      <div class="card-h"><h2>Application</h2><span class="step">Step 1 &middot; Enter details</span></div>
+      <div class="card-b">
+        <div class="group">
+          <div class="group-t">Loan request</div>
+          <label class="field"><span>Applicant reference (not scored)</span><input type="text" id="name"></label>
+          <div class="two">
+            <label class="field"><span>Loan amount</span><input type="number" id="loan" min="1" step="1000"></label>
+            <label class="field"><span>Price of goods / works</span><input type="number" id="goods" min="0" step="1000"></label>
+          </div>
+          <label class="check"><input type="checkbox" id="goodsMissing"> Goods price not provided</label>
+          <div class="derived"><span>Loan / goods price</span><b id="dCTG"></b></div>
+        </div>
+
+        <div class="group">
+          <div class="group-t">Applicant profile</div>
+          <label class="field"><span>Income type</span><select id="incomeType"></select></label>
+          <label class="field"><span>Occupation</span><select id="occupation"></select></label>
+          <label class="field"><span>Highest education</span><select id="education"></select></label>
+          <label class="field"><span>Years in current job</span><input type="number" id="empYears" min="0" max="60" step="0.5"></label>
+          <label class="check"><input type="checkbox" id="notEmployed"> No current employer (pensioner / unemployed)</label>
+        </div>
+
+        <div class="group">
+          <div class="group-t">Credit bureau record</div>
+          <label class="check"><input type="checkbox" id="noBureau"> No credit bureau history</label>
+          <div class="two">
+            <label class="field"><span>Credits on record (all)</span><input type="number" id="totalCredits" min="0" step="1"></label>
+            <label class="field"><span>Of which still active</span><input type="number" id="activeCredits" min="0" step="1"></label>
+          </div>
+          <div class="derived"><span>Share still open</span><b id="dALR"></b></div>
+          <div class="two">
+            <label class="field"><span>Years since newest credit</span><input type="number" id="newestAge" min="0" max="8" step="0.1"></label>
+            <label class="field"><span>Years since oldest credit</span><input type="number" id="oldestAge" min="0" max="8" step="0.1"></label>
+          </div>
+          <div class="two">
+            <label class="field"><span>Debt owed on active credits</span><input type="number" id="activeDebt" min="0" step="1000" placeholder="blank = not reported"></label>
+            <label class="field"><span>Credit amount of active credits</span><input type="number" id="activeCreditAmt" min="0" step="1000"></label>
+          </div>
+          <div class="derived"><span>Utilisation (debt / credit)</span><b id="dDTC"></b></div>
+          <label class="field"><span>Microloans on record</span><input type="number" id="microloans" min="0" step="1"></label>
+        </div>
+        <div id="alerts"></div>
+        <p class="hint">Amounts are in the dataset's own currency units (not stated in the data dictionary). Bureau history covers roughly the last 8 years.</p>
+      </div>
+    </section>
+
+    <!-- ======================= DECISION ======================= -->
+    <section class="card" aria-label="Decision">
+      <div class="card-h"><h2>Decision for <span id="rName"></span></h2><span class="step">Step 2 &middot; Result</span></div>
+      <div class="card-b">
+        <div class="decision" id="decisionBox">
+          <div class="score-big"><small>Score</small><span id="rScore"></span></div>
+          <div class="verdict"><b id="rVerdict"></b><div id="rVerdictWhy"></div></div>
+          <div class="gapbox"><span class="figure" id="rGap"></span><small>points vs cutoff</small></div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><small>Model probability of default</small><div class="figure" id="rPD"></div><div class="sub" id="rPDsub"></div></div>
+          <div class="metric"><small>Odds at this score (bad : good)</small><div class="figure" id="rOdds"></div><div class="sub">from the score scale</div></div>
+          <div class="metric"><small>Scores higher than</small><div class="figure" id="rPct"></div><div class="sub">of training applicants</div></div>
+          <div class="metric"><small>Expected 1-year profit if approved</small><div class="figure" id="rProfit"></div><div class="sub" id="rProfitSub"></div></div>
+        </div>
+
+        <div class="chart-t">Where this applicant sits among 149,318 training applicants <span>bars = applicants at each score &middot; line = observed bad rate per 10-point band (table below)</span></div>
+        <svg id="dist" viewBox="0 0 720 190" width="100%" role="img" aria-label="Score distribution"></svg>
+      </div>
+    </section>
+  </div>
+
+  <!-- ======================= RISK AND PROFIT ======================= -->
+  <section class="card full" aria-label="Risk and profit">
+    <div class="card-h"><h2>Risk and profit for this applicant</h2><span class="step">Odds &middot; probability of default &middot; profit</span></div>
+    <div class="card-b method">
+      <div>
+        <div class="sub-t">Risk</div>
+        <table class="kv2" id="riskTable"></table>
+      </div>
+      <div>
+        <div class="sub-t">Expected 1-year profit if approved</div>
+        <table class="kv2" id="profitTable"></table>
+        <p class="hint">Illustrative Step 7 assumptions (no lender data): revenue 12%, funding 4%, operating cost 2% of the loan; loss given default 60%; exposure = loan amount. A declined applicant earns and loses nothing.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= DISTRIBUTION TABLE ======================= -->
+  <section class="card full" aria-label="Score distribution">
+    <div class="card-h"><h2>Score distribution of the final scorecard</h2><span class="step">Training sample &middot; data/final_scores.csv</span></div>
+    <div class="card-b tablewrap">
+      <table>
+        <thead><tr>
+          <th>Score band</th><th class="num">Applicants</th><th class="num">% of applicants</th><th class="num">Bads</th><th class="num">Observed bad rate</th>
+          <th class="num">Approval rate if cutoff = band start</th><th class="num">Approved bad rate at that cutoff</th><th></th>
+        </tr></thead>
+        <tbody id="bandRows"></tbody>
+      </table>
+      <p class="hint" id="policyNote"></p>
+    </div>
+  </section>
+
+  <!-- ======================= BREAKDOWN ======================= -->
+  <section class="card full" aria-label="Points breakdown">
+    <div class="card-h"><h2>Points breakdown</h2><span class="step">Step 3 &middot; How the score is built</span></div>
+    <div class="card-b tablewrap">
+      <table>
+        <thead><tr>
+          <th>Characteristic</th><th>Applicant value</th><th>Scorecard group</th>
+          <th class="num">WOE</th><th class="num">Coefficient</th><th class="num">Points</th><th class="barcell"></th>
+          <th class="num">vs best group</th><th>Justification</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="5">Total score</td><td class="num" id="rTotal"></td><td></td><td class="num" id="rLost"></td><td id="rTotalNote"></td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- ======================= METHOD ======================= -->
+  <section class="card full" aria-label="Calculation">
+    <div class="card-h"><h2>Calculation</h2><span class="step">Step 4 &middot; Show the working</span></div>
+    <div class="card-b method">
+      <div>
+        <ol class="steps">
+          <li><b>Answer &rarr; characteristic.</b> Ratios are worked out from the form, exactly as in the data pipeline (e.g. loan &divide; goods price; active &divide; total credits; debt &divide; credit on active credits).</li>
+          <li><b>Characteristic &rarr; group.</b> The value falls into one of the coarse groups agreed in Step 5. Missing values (no bureau history, no employer, occupation not stated) have their own group.</li>
+          <li><b>Group &rarr; WOE.</b> Each group has a Weight of Evidence fitted on the training sample (scorecardpy sign: positive = riskier than average).</li>
+          <li><b>WOE &rarr; points.</b> Points = round( &minus;Factor &times; coefficient &times; WOE + base points &divide; 11 ).</li>
+          <li><b>Decision.</b> Add the 11 points. <b>Approve if the score is 600 or more.</b></li>
+        </ol>
+        <table class="kv" id="scaleTable"></table>
+      </div>
+      <pre class="calc" id="calc"></pre>
+    </div>
+  </section>
+
+  <p class="foot">Built from the final model files: <code>data/step6_scorecard_model.pkl</code> (bins, WOE, coefficients), <code>data/final_scorecard_points.csv</code> (points) and <code>data/final_scores.csv</code> (score distribution). Profit uses the illustrative Step 7 assumptions: revenue 12%, funding 4%, operating cost 2% of the loan, loss given default 60% (break-even PD 10%). Expected profit = 6% &times; loan &minus; PD &times; 60% &times; loan, using the model PD.</p>
+</main>
+
+<script>
+const DATA = {"FACTOR": 28.85390081777927, "OFFSET": 534.3776191482414, "INTERCEPT": -2.449109523242031, "BASE_EACH": 55.003998402158686, "CUTOFF": 600, "ODDS0": 0.10286905466893935, "DTC_INVALID_MEDIAN": 0.6096493379966778, "model": [{"name": "EMPLOYMENT_YEARS", "label": "Years in current job", "why": "Longer time in the same job means more stable income.", "coef": 0.678715436609115, "categorical": false, "bins": [{"label": "Not employed (pensioner / no employer)", "woe": -0.43666204646915985, "points": 64, "n": 29563, "badRate": 0.05293779386395156, "missing": true, "below": null}, {"label": "2.5 years or less", "woe": 0.3872715472043128, "points": 47, "n": 34969, "badRate": 0.11301438416883526, "missing": false, "below": 2.500001}, {"label": "More than 2.5 to 4 years", "woe": 0.2443021665371366, "points": 50, "n": 18752, "badRate": 0.09945605802047781, "missing": false, "below": 4.000001}, {"label": "More than 4 to 7 years", "woe": 0.04982024876148304, "points": 54, "n": 25113, "badRate": 0.08334328833671803, "missing": false, "below": 7.000001}, {"label": "More than 7 to 9 years", "woe": -0.10850227974242437, "points": 57, "n": 11622, "badRate": 0.07201858544140423, "missing": false, "below": 9.000001}, {"label": "More than 9 to 15 years", "woe": -0.30221050411986755, "points": 61, "n": 17721, "badRate": 0.0600981885898087, "missing": false, "below": 15.000001}, {"label": "More than 15 years", "woe": -0.6277681874697238, "points": 67, "n": 11578, "badRate": 0.044135429262394194, "missing": false, "below": 1e+308}]}, {"name": "CREDIT_TO_GOODS_RATIO", "label": "Loan / goods price", "why": "Borrowing well above the price of the goods (fees, insurance, extra cash) raises risk.", "coef": 0.8300374708979729, "categorical": false, "bins": [{"label": "1.13 or less (incl. goods price not given)", "woe": -0.25405583151480243, "points": 61, "n": 79330, "badRate": 0.0628765914534224, "missing": true, "below": 1.130001}, {"label": "More than 1.13 to 1.20", "woe": 0.03034505108160078, "points": 54, "n": 37634, "badRate": 0.081867460275283, "missing": false, "below": 1.200001}, {"label": "More than 1.20 to 1.28", "woe": 0.3411871548180472, "points": 47, "n": 17460, "badRate": 0.10847651775486827, "missing": false, "below": 1.280001}, {"label": "More than 1.28", "woe": 0.5399492819775001, "points": 42, "n": 14894, "badRate": 0.1292466765140325, "missing": false, "below": 1e+308}]}, {"name": "ACTIVE_LOAN_RATIO", "label": "Share of bureau credits still open", "why": "Many credits still open rather than repaid signals higher credit demand.", "coef": 0.3212832803256085, "categorical": false, "bins": [{"label": "No bureau history", "woe": 0.22786714216912846, "points": 53, "n": 21981, "badRate": 0.09799372185068923, "missing": true, "below": null}, {"label": "0.20 or less", "woe": -0.43476358363380824, "points": 59, "n": 35789, "badRate": 0.05303305484925536, "missing": false, "below": 0.200001}, {"label": "More than 0.20 to 0.34", "woe": -0.27062195628137986, "points": 58, "n": 26055, "badRate": 0.06190750335828056, "missing": false, "below": 0.340001}, {"label": "More than 0.34 to 0.50", "woe": 0.0002688427598461963, "points": 55, "n": 30577, "badRate": 0.07963501978611374, "missing": false, "below": 0.500001}, {"label": "More than 0.50 to 0.67", "woe": 0.2743262875588555, "points": 52, "n": 13271, "badRate": 0.1021776806570718, "missing": false, "below": 0.670001}, {"label": "More than 0.67", "woe": 0.38071203944571336, "points": 51, "n": 21645, "badRate": 0.11235851235851235, "missing": false, "below": 1e+308}]}, {"name": "MOST_RECENT_CREDIT_AGE", "label": "Years since newest credit", "why": "Very recent new credit suggests the applicant is actively seeking credit.", "coef": 0.37658308346319436, "categorical": false, "bins": [{"label": "No bureau history", "woe": 0.22786714216912846, "points": 53, "n": 21981, "badRate": 0.09799372185068923, "missing": true, "below": null}, {"label": "0.2 years or less", "woe": 0.5131502033836529, "points": 49, "n": 14280, "badRate": 0.12626050420168067, "missing": false, "below": 0.200001}, {"label": "More than 0.2 to 0.7 years", "woe": 0.11578458421024164, "points": 54, "n": 42181, "badRate": 0.08852326877029942, "missing": false, "below": 0.700001}, {"label": "More than 0.7 to 1.7 years", "woe": -0.24064798811451796, "points": 58, "n": 39327, "badRate": 0.06367126910265213, "missing": false, "below": 1.700001}, {"label": "More than 1.7 years", "woe": -0.42229851292257803, "points": 60, "n": 31549, "badRate": 0.05366255665789724, "missing": false, "below": 1e+308}]}, {"name": "OCCUPATION_TYPE", "label": "Occupation", "why": "Job type relates to income level and stability.", "coef": 0.45256773457066846, "categorical": true, "bins": [{"label": "Not stated", "woe": -0.23549447464171988, "points": 58, "n": 48844, "badRate": 0.0639791990827942, "categories": ["missing"], "missing": true}, {"label": "Office, professional and skilled", "woe": -0.2839860554692593, "points": 59, "n": 40320, "badRate": 0.061135912698412696, "categories": ["Accountants", "IT staff", "HR staff", "Managers", "Secretaries", "Core staff", "Medicine staff", "High skill tech staff", "Private service staff", "Realty agents"], "missing": false}, {"label": "Sales, service and labour", "woe": 0.26222725597004853, "points": 52, "n": 50043, "badRate": 0.10107307715364787, "categories": ["Sales staff", "Cleaning staff", "Laborers", "Security staff", "Cooking staff"], "missing": false}, {"label": "Drivers, waiters and low-skill labour", "woe": 0.47990905866985273, "points": 49, "n": 10111, "badRate": 0.12263871031549797, "categories": ["Drivers", "Waiters/barmen staff", "Low-skill Laborers"], "missing": false}]}, {"name": "OLDEST_CREDIT_AGE", "label": "Years since oldest credit", "why": "A longer credit history gives more evidence of repayment behaviour.", "coef": 0.38064894933596677, "categorical": false, "bins": [{"label": "No bureau history", "woe": 0.22786714216912846, "points": 53, "n": 21981, "badRate": 0.09799372185068923, "missing": true, "below": null}, {"label": "2 years or less", "woe": 0.4184857074527435, "points": 50, "n": 20468, "badRate": 0.1161813562634356, "missing": false, "below": 2.000001}, {"label": "More than 2 to 3 years", "woe": 0.14898208014531727, "points": 53, "n": 13514, "badRate": 0.09123871540624537, "missing": false, "below": 3.000001}, {"label": "More than 3 to 5 years", "woe": -0.028730068547253025, "points": 55, "n": 29148, "badRate": 0.07753533690133113, "missing": false, "below": 5.000001}, {"label": "More than 5 years", "woe": -0.3010322302758283, "points": 58, "n": 64207, "badRate": 0.060164779541171526, "missing": false, "below": 1e+308}]}, {"name": "ACTIVE_LOAN_COUNT", "label": "Active bureau credits", "why": "More current obligations means more existing repayments.", "coef": 0.5701005668147174, "categorical": false, "bins": [{"label": "No bureau history", "woe": 0.22786714216912846, "points": 51, "n": 21981, "badRate": 0.09799372185068923, "missing": true, "below": null}, {"label": "0", "woe": -0.40418872873350087, "points": 62, "n": 22605, "badRate": 0.05458969254589693, "missing": false, "below": 0.5}, {"label": "1 to 2", "woe": -0.12831248295668873, "points": 57, "n": 63842, "badRate": 0.0707058049559851, "missing": false, "below": 2.5}, {"label": "3", "woe": 0.05146708216438765, "points": 54, "n": 18402, "badRate": 0.08346918813172481, "missing": false, "below": 3.5}, {"label": "4 or more", "woe": 0.34604276231092157, "points": 49, "n": 22488, "badRate": 0.10894699395233014, "missing": false, "below": 1e+308}]}, {"name": "NAME_INCOME_TYPE", "label": "Income type", "why": "Pensions and public-sector salaries are the most stable income sources.", "coef": 0.248463319331506, "categorical": true, "bins": [{"label": "Pensioner / State servant", "woe": -0.4208470552446879, "points": 58, "n": 39638, "badRate": 0.05373631363842777, "categories": ["Pensioner", "State servant"], "missing": false}, {"label": "Commercial associate / Businessman / Student", "woe": -0.05254822949024276, "points": 55, "n": 34371, "badRate": 0.07584882604521254, "categories": ["Commercial associate", "Businessman", "Student"], "missing": false}, {"label": "Working / Unemployed / Maternity leave", "woe": 0.19300887629006658, "points": 54, "n": 75309, "badRate": 0.09495545021179408, "categories": ["Working", "Unemployed", "Maternity leave"], "missing": false}]}, {"name": "DEBT_TO_CREDIT_RATIO", "label": "Utilisation of active credit", "why": "Using most of the available credit is a strong risk signal.", "coef": 0.8111769570519843, "categorical": false, "bins": [{"label": "No active credit or no bureau history", "woe": -0.060236260526654276, "points": 56, "n": 51174, "badRate": 0.07531168171337008, "missing": true, "below": null}, {"label": "0 (nothing owed)", "woe": -0.5238277593079336, "points": 67, "n": 9480, "badRate": 0.048734177215189876, "missing": false, "below": 1e-07}, {"label": "More than 0 to 0.70", "woe": -0.15679353675554952, "points": 59, "n": 49000, "badRate": 0.06885714285714285, "missing": false, "below": 0.700001}, {"label": "More than 0.70 to 0.80", "woe": 0.10255368665819682, "points": 53, "n": 11365, "badRate": 0.08746150461944567, "missing": false, "below": 0.800001}, {"label": "More than 0.80 to 0.90", "woe": 0.26615763274372467, "points": 49, "n": 12511, "badRate": 0.1014307409479658, "missing": false, "below": 0.9000001}, {"label": "More than 0.90", "woe": 0.47919071939736013, "points": 44, "n": 15788, "badRate": 0.12256143906764631, "missing": false, "below": 1e+308}]}, {"name": "NAME_EDUCATION_TYPE", "label": "Education", "why": "Higher education relates to higher and more stable earning capacity.", "coef": 0.8362955054271107, "categorical": true, "bins": [{"label": "Higher education / Academic degree", "woe": -0.4260470723773356, "points": 65, "n": 35925, "badRate": 0.05347251217814892, "categories": ["Higher education", "Academic degree"], "missing": false}, {"label": "Incomplete higher", "woe": 0.02465854464465167, "points": 54, "n": 4580, "badRate": 0.0814410480349345, "categories": ["Incomplete higher"], "missing": false}, {"label": "Secondary / Lower secondary", "woe": 0.11139358346229887, "points": 52, "n": 108813, "badRate": 0.0881696120867911, "categories": ["Secondary / secondary special", "Lower secondary"], "missing": false}]}, {"name": "MICROLOAN_COUNT", "label": "Microloans on record", "why": "Microloans are short-term, high-cost credit and a sign of financial stress.", "coef": 0.22071847356815172, "categorical": false, "bins": [{"label": "No bureau history", "woe": 0.22786714216912846, "points": 54, "n": 21981, "badRate": 0.09799372185068923, "missing": true, "below": null}, {"label": "0", "woe": -0.06585439602190515, "points": 55, "n": 125585, "badRate": 0.07492136799777044, "missing": false, "below": 0.5}, {"label": "1 or more", "woe": 0.9680807734442582, "points": 49, "n": 1752, "badRate": 0.18550228310502284, "missing": false, "below": 1e+308}]}], "dist": {"score": [546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665], "n": [1, 3, 6, 1, 15, 5, 12, 20, 15, 23, 28, 35, 67, 51, 69, 49, 102, 107, 182, 187, 141, 435, 277, 327, 414, 353, 681, 524, 613, 621, 682, 728, 729, 1413, 970, 944, 1213, 1283, 1118, 1167, 2700, 1769, 1364, 2085, 1826, 1531, 2034, 2944, 2393, 1874, 2353, 2214, 1942, 3109, 2825, 2268, 2349, 2412, 2437, 2350, 4458, 2973, 2506, 2939, 2636, 2676, 2663, 5298, 2744, 2435, 3121, 2674, 2413, 2782, 2842, 2470, 2242, 2614, 2386, 2121, 2556, 2010, 1965, 1952, 1749, 1834, 1540, 1744, 1481, 1370, 1796, 1175, 1399, 906, 1336, 995, 569, 1566, 449, 467, 411, 427, 366, 346, 218, 269, 121, 188, 157, 66, 278, 56, 35, 30, 54, 18, 23, 8, 1, 4], "bad": [1, 1, 2, 0, 6, 2, 4, 10, 3, 10, 11, 14, 26, 17, 28, 11, 32, 37, 58, 56, 38, 103, 60, 79, 88, 76, 132, 113, 114, 115, 129, 131, 139, 242, 169, 160, 190, 195, 164, 158, 334, 247, 164, 275, 229, 189, 228, 285, 254, 205, 241, 243, 215, 300, 244, 222, 212, 222, 196, 175, 323, 242, 185, 229, 171, 180, 190, 329, 156, 141, 177, 145, 122, 158, 123, 122, 104, 134, 93, 79, 94, 67, 63, 65, 50, 46, 42, 66, 25, 37, 45, 25, 39, 25, 45, 14, 18, 41, 8, 5, 7, 9, 9, 9, 2, 8, 1, 4, 0, 3, 4, 1, 2, 1, 0, 0, 1, 0, 0, 0]}, "trainApproval": 0.6936136299709346, "bands": [{"from": 540, "to": 549, "n": 11, "bad": 4, "approveIfCutoffHere": 1.0, "approvedBadRate": 0.0796153176442224}, {"from": 550, "to": 559, "n": 271, "bad": 103, "approveIfCutoffHere": 0.9999263317215606, "approvedBadRate": 0.07959439276122351}, {"from": 560, "to": 569, "n": 1876, "bad": 502, "approveIfCutoffHere": 0.9981114132254651, "approvedBadRate": 0.07904801524463888}, {"from": 570, "to": 579, "n": 6758, "bad": 1279, "approveIfCutoffHere": 0.9855476231934529, "approvedBadRate": 0.07664446860559934}, {"from": 580, "to": 589, "n": 14613, "bad": 2056, "approveIfCutoffHere": 0.9402885117668333, "approvedBadRate": 0.07122405663736983}, {"from": 590, "to": 599, "n": 22220, "bad": 2389, "approveIfCutoffHere": 0.8424235524183287, "approvedBadRate": 0.06315337589137365}, {"from": 600, "to": 609, "n": 27517, "bad": 2250, "approveIfCutoffHere": 0.6936136299709346, "approvedBadRate": 0.05363574042425823}, {"from": 610, "to": 619, "n": 29442, "bad": 1769, "approveIfCutoffHere": 0.5093290828969046, "approvedBadRate": 0.043457108294324934}, {"from": 620, "to": 629, "n": 23158, "bad": 944, "approveIfCutoffHere": 0.31215258709599647, "approvedBadRate": 0.03295430165200601}, {"from": 630, "to": 639, "n": 14994, "bad": 400, "approveIfCutoffHere": 0.15706076963259621, "approvedBadRate": 0.025243049633293536}, {"from": 640, "to": 649, "n": 6932, "bad": 165, "approveIfCutoffHere": 0.05664420900360305, "approvedBadRate": 0.022700401986285174}, {"from": 650, "to": 659, "n": 1418, "bad": 26, "approveIfCutoffHere": 0.010219799354397997, "approvedBadRate": 0.017693315858453473}, {"from": 660, "to": 669, "n": 108, "bad": 1, "approveIfCutoffHere": 0.0007232885519495306, "approvedBadRate": 0.009259259259259259}], "policy": {"train": {"approval": 0.6936136299709346, "badRate": 0.05363574042425823, "n": 149318}, "test": {"approval": 0.688923961621402, "badRate": 0.05357588404745163, "n": 63994}}};
+const { FACTOR, OFFSET, INTERCEPT, BASE_EACH, CUTOFF } = DATA;
+const MODEL = Object.fromEntries(DATA.model.map(m => [m.name, m]));
+const ORDER = DATA.model.map(m => m.name);
+
+// ---------------- scoring: identical rules to scorecardpy woebin_ply (bins are left-closed: value < break)
+function findBin(m, value) {
+  if (value === null || Number.isNaN(value) || value === 'Not stated') return m.bins.find(b => b.missing);
+  if (m.categorical) return m.bins.find(b => b.categories.includes(value));
+  return m.bins.find(b => b.below !== null && value < b.below);
+}
+function scoreFeatures(features) {
+  const rows = ORDER.map(name => {
+    const m = MODEL[name], b = findBin(m, features[name]);
+    if (!b) throw new Error('No bin for ' + name + ' = ' + features[name]);
+    return { name, m, value: features[name], b, raw: -FACTOR * m.coef * b.woe + BASE_EACH, best: Math.max(...m.bins.map(x => x.points)) };
+  });
+  const total = rows.reduce((s, r) => s + r.b.points, 0);
+  const logit = INTERCEPT + rows.reduce((s, r) => s + r.m.coef * r.b.woe, 0);       // the logistic regression itself
+  const pd = 1 / (1 + Math.exp(-logit));
+  const odds = Math.exp((OFFSET - total) / FACTOR);                                   // odds implied by the (rounded) score
+  return { rows, total, logit, pd, odds };
+}
+
+// ---------------- form: raw answers -> characteristics (Steps 1, 2 and 4 of the pipeline)
+const OCCUPATIONS = ['Not stated', 'Accountants', 'Cleaning staff', 'Cooking staff', 'Core staff', 'Drivers', 'High skill tech staff', 'HR staff',
+  'IT staff', 'Laborers', 'Low-skill Laborers', 'Managers', 'Medicine staff', 'Private service staff', 'Realty agents', 'Sales staff',
+  'Secretaries', 'Security staff', 'Waiters/barmen staff'];
+const INCOME_TYPES = ['Working', 'Commercial associate', 'Pensioner', 'State servant', 'Unemployed', 'Student', 'Businessman', 'Maternity leave'];
+const EDUCATION = ['Secondary / secondary special', 'Higher education', 'Incomplete higher', 'Lower secondary', 'Academic degree'];
+
+const $ = id => document.getElementById(id);
+const fill = (sel, items) => sel.innerHTML = items.map(v => `<option value="${v}">${v}</option>`).join('');
+fill($('occupation'), OCCUPATIONS); fill($('incomeType'), INCOME_TYPES); fill($('education'), EDUCATION);
+const num = id => { const t = $(id).value.trim(); if (t === '') return null; const v = Number(t); return Number.isFinite(v) ? v : null; };
+const fmt = (v, d = 0) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+function readForm() {
+  const noBureau = $('noBureau').checked, notEmployed = $('notEmployed').checked, goodsMissing = $('goodsMissing').checked;
+  const loan = num('loan'), goods = num('goods');
+  const total = num('totalCredits'), active = num('activeCredits'), newest = num('newestAge'), oldest = num('oldestAge');
+  const debt = num('activeDebt'), creditAmt = num('activeCreditAmt'), micro = num('microloans');
+  const alerts = [];
+
+  // CREDIT_TO_GOODS_RATIO = AMT_CREDIT / AMT_GOODS_PRICE (missing if no goods price)
+  const ctg = (!goodsMissing && loan > 0 && goods > 0) ? loan / goods : null;
+
+  let alr = null, dtc = null, dtcNote = '';
+  if (!noBureau) {
+    if (!(total >= 1)) alerts.push('An applicant with a bureau record has at least one credit on record.');
+    if (active !== null && total !== null && active > total) alerts.push('Active credits cannot be more than credits on record.');
+    if (newest !== null && oldest !== null && newest > oldest) alerts.push('The newest credit cannot be older than the oldest credit.');
+    if (micro !== null && total !== null && micro > total) alerts.push('Microloans are part of the credits on record.');
+    if ((newest ?? 0) > 8 || (oldest ?? 0) > 8) alerts.push('The bureau only shows about the last 8 years of credit.');
+    // ACTIVE_LOAN_RATIO = active / all credits on record
+    alr = (total >= 1 && active !== null) ? Math.min(active, total) / total : null;
+    // DEBT_TO_CREDIT_RATIO = active debt / active credit amount; missing if no active credit, no credit amount, or debt not reported
+    if (active > 0 && creditAmt > 0 && debt !== null) {
+      dtc = debt / creditAmt;
+      if (dtc > 10) { dtcNote = `Ratio ${fmt(dtc, 1)} breaks the invalid-value rule (> 10); replaced by the median ${fmt(DATA.DTC_INVALID_MEDIAN, 2)} as in Step 4.`; dtc = DATA.DTC_INVALID_MEDIAN; }
+    }
+    if (active > 0 && debt === null) dtcNote = 'Debt not reported: utilisation is missing (it is never set to zero).';
+  }
+  if (dtcNote) alerts.push(dtcNote);
+
+  const features = {
+    EMPLOYMENT_YEARS: notEmployed ? null : num('empYears'),
+    CREDIT_TO_GOODS_RATIO: ctg,
+    ACTIVE_LOAN_RATIO: noBureau ? null : alr,
+    MOST_RECENT_CREDIT_AGE: noBureau ? null : newest,
+    OCCUPATION_TYPE: $('occupation').value,
+    OLDEST_CREDIT_AGE: noBureau ? null : oldest,
+    ACTIVE_LOAN_COUNT: noBureau ? null : active,
+    NAME_INCOME_TYPE: $('incomeType').value,
+    DEBT_TO_CREDIT_RATIO: noBureau ? null : dtc,
+    NAME_EDUCATION_TYPE: $('education').value,
+    MICROLOAN_COUNT: noBureau ? null : micro,
+  };
+  return { features, alerts, loan, noBureau, notEmployed, goodsMissing };
+}
+
+function showValue(name, v) {
+  if (MODEL[name].categorical) return v === 'Not stated' ? '<i>not stated</i>' : v;
+  if (v === null) return '<i>missing</i>';
+  if (/RATIO/.test(name)) return fmt(v, 2);
+  if (/AGE|YEARS/.test(name)) return fmt(v, 1) + ' yrs';
+  return fmt(v);
+}
+
+// ---------------- score distribution chart
+const dist = DATA.dist, nTrain = dist.n.reduce((a, b) => a + b, 0);
+function drawDist(score) {
+  const W = 720, H = 190, L = 34, R = 40, T = 10, B = 26;
+  const lo = Math.min(...dist.score), hi = Math.max(...dist.score);
+  const x = s => L + (s - lo) / (hi - lo) * (W - L - R);
+  const maxN = Math.max(...dist.n);
+  const y = n => T + (1 - n / maxN) * (H - T - B);
+  // observed bad rate of each 10-point score band (the same figures as the score-band table)
+  const pts = DATA.bands.filter(b => b.n > 0).map(b => [Math.min(hi, Math.max(lo, (b.from + b.to) / 2)), b.bad / b.n, b]);
+  const maxBR = Math.ceil(Math.max(...pts.map(p => p[1])) * 10) / 10, yb = r => T + (1 - Math.min(r, maxBR) / maxBR) * (H - T - B);
+  const bw = Math.max(1, (W - L - R) / (hi - lo + 1) - 1);
+  let svg = '';
+  dist.score.forEach((s, i) => {
+    const col = s >= CUTOFF ? '#9cc7a9' : '#e6a9a3';
+    svg += `<rect x="${x(s) - bw / 2}" y="${y(dist.n[i])}" width="${bw}" height="${H - B - y(dist.n[i])}" fill="${col}"/>`;
+  });
+  svg += `<polyline fill="none" stroke="#0d2b4e" stroke-width="1.6" points="${pts.map(p => `${x(p[0])},${yb(p[1])}`).join(' ')}"/>`;
+  pts.forEach(p => svg += `<circle cx="${x(p[0])}" cy="${yb(p[1])}" r="3.2" fill="#0d2b4e"><title>Scores ${p[2].from}-${p[2].to}: ${fmt(p[2].n)} applicants, ${fmt(p[2].bad)} bad, observed bad rate ${(p[1] * 100).toFixed(2)}%</title></circle>`);
+  [0, 0.1, 0.2, 0.3, 0.4, 0.5].filter(r => r <= maxBR + 1e-9).forEach(r => svg +=`<text x="${W - R + 6}" y="${yb(r) + 4}">${r * 100}%</text><line x1="${L}" x2="${W - R}" y1="${yb(r)}" y2="${yb(r)}" stroke="#eef1f5"/>`);
+  for (let s = Math.ceil(lo / 20) * 20; s <= hi; s += 20) svg += `<text x="${x(s)}" y="${H - 8}" text-anchor="middle">${s}</text>`;
+  svg += `<line x1="${x(CUTOFF)}" x2="${x(CUTOFF)}" y1="${T}" y2="${H - B}" stroke="#14202e" stroke-dasharray="4 3"/><text x="${x(CUTOFF) - 5}" y="${H - B - 6}" text-anchor="end" style="fill:#14202e;font-weight:600">cutoff 600</text>`;
+  const sx = x(Math.max(lo, Math.min(hi, score)));
+  const right = sx < W - 160;   // label to the right of the marker unless near the right edge
+  svg += `<line x1="${sx}" x2="${sx}" y1="${T}" y2="${H - B}" stroke="#2e75b6" stroke-width="2.5"/><circle cx="${sx}" cy="${T + 4}" r="5" fill="#2e75b6"/>`;
+  svg += `<rect x="${right ? sx + 6 : sx - 126}" y="${T - 2}" width="120" height="17" rx="3" fill="#ffffff" opacity=".9"/>`;
+  svg += `<text x="${right ? sx + 10 : sx - 10}" y="${T + 10}" text-anchor="${right ? 'start' : 'end'}" style="fill:#2e75b6;font-weight:700">this applicant: ${score}</text>`;
+  svg += `<text x="${L - 6}" y="${H - B + 4}" text-anchor="end">0</text>`;
+  $('dist').innerHTML = svg;
+}
+
+// ---------------- render
+function render() {
+  const { features, alerts, loan, noBureau, notEmployed, goodsMissing } = readForm();
+  ['totalCredits', 'activeCredits', 'newestAge', 'oldestAge', 'activeDebt', 'activeCreditAmt', 'microloans'].forEach(id => $(id).disabled = noBureau);
+  $('empYears').disabled = notEmployed;
+  $('goods').disabled = goodsMissing;
+  $('dCTG').textContent = features.CREDIT_TO_GOODS_RATIO === null ? 'missing' : fmt(features.CREDIT_TO_GOODS_RATIO, 3);
+  $('dALR').textContent = noBureau ? 'no bureau history' : (features.ACTIVE_LOAN_RATIO === null ? 'missing' : fmt(features.ACTIVE_LOAN_RATIO, 3));
+  $('dDTC').textContent = noBureau ? 'no bureau history' : (features.DEBT_TO_CREDIT_RATIO === null ? 'missing' : fmt(features.DEBT_TO_CREDIT_RATIO, 3));
+  $('alerts').innerHTML = alerts.map(a => `<div class="alert">${a}</div>`).join('');
+
+  const r = scoreFeatures(features), approve = r.total >= CUTOFF, gap = r.total - CUTOFF;
+  $('rName').textContent = $('name').value.trim() || 'applicant';
+  $('decisionBox').className = 'decision ' + (approve ? 'approve' : 'decline');
+  $('rScore').textContent = r.total;
+  $('rVerdict').textContent = approve ? 'APPROVE' : 'DECLINE';
+  $('rVerdictWhy').textContent = approve ? `The score is at or above the cutoff of ${CUTOFF}.` : `The score is ${-gap} point${gap === -1 ? '' : 's'} below the cutoff of ${CUTOFF}.`;
+  $('rGap').textContent = (gap > 0 ? '+' : '') + gap;
+  $('rPD').textContent = (r.pd * 100).toFixed(2) + '%';
+  $('rPDsub').textContent = `break-even 10.00% · ${r.pd < 0.10 ? 'below' : 'above'}`;
+  $('rOdds').textContent = '1 : ' + fmt(1 / r.odds, 2);
+  const below = dist.score.reduce((s, sc, i) => s + (sc < r.total ? dist.n[i] : 0), 0);
+  $('rPct').textContent = fmt(below / nTrain * 100, 1) + '%';
+  if (loan > 0) {
+    const profit = 0.06 * loan - r.pd * 0.60 * loan;
+    $('rProfit').textContent = (profit >= 0 ? '+' : '−') + fmt(Math.abs(profit));
+    $('rProfitSub').textContent = `on a loan of ${fmt(loan)}`;
+  } else { $('rProfit').textContent = '–'; $('rProfitSub').textContent = 'enter a loan amount'; }
+  drawDist(r.total);
+
+  // ---- risk
+  const band = DATA.bands.find(b => r.total >= b.from && r.total <= b.to);
+  const oddsCut = Math.exp((OFFSET - CUTOFF) / FACTOR);
+  const scorePD = r.odds / (1 + r.odds);
+  const pct = v => (v * 100).toFixed(2) + '%';
+  $('riskTable').innerHTML = [
+    ['Score and decision', `Approve if score ≥ ${CUTOFF}`, `${r.total} → ${approve ? 'APPROVE' : 'DECLINE'}`],
+    ['Odds at this score (bad : good)', `e^((Offset − score) ÷ Factor) = e^((${OFFSET.toFixed(3)} − ${r.total}) ÷ ${FACTOR.toFixed(3)})`, `1 : ${(1 / r.odds).toFixed(2)}`],
+    ['Probability of default implied by the score', `odds ÷ (1 + odds)`, pct(scorePD)],
+    ['Model probability of default', `1 ÷ (1 + e^(−logit)), logit = ${r.logit.toFixed(4)} (unrounded; used for profit)`, pct(r.pd)],
+    ['Break-even probability of default', `margin ÷ LGD = 6% ÷ 60%`, '10.00%'],
+    [`Observed bad rate, training applicants scoring ${band ? band.from + '–' + band.to : r.total}`, band ? `${fmt(band.bad)} bad of ${fmt(band.n)} applicants (score-band table)` : 'outside the training score range', band && band.n ? pct(band.bad / band.n) : '–'],
+    ['At the cutoff (score 600)', `odds 1 : ${(1 / oddsCut).toFixed(2)}`, `PD ${pct(oddsCut / (1 + oddsCut))}`],
+  ].map(([k, f, v]) => `<tr><td>${k}<span class="f">${f}</span></td><td>${v}</td></tr>`).join('');
+
+  // ---- profit (Step 7: 12% revenue, 4% funding, 2% operating, PD x 60% x loan expected loss)
+  if (loan > 0) {
+    const rev = 0.12 * loan, fund = 0.04 * loan, op = 0.02 * loan, ecl = r.pd * 0.60 * loan, net = rev - fund - op - ecl;
+    const money = v => (v < 0 ? '−' : '') + fmt(Math.abs(v));
+    $('profitTable').innerHTML = [
+      ['Revenue (interest and fees)', `12% × ${fmt(loan)}`, money(rev), 'pos'],
+      ['Funding cost', `4% × ${fmt(loan)}`, money(-fund), 'neg'],
+      ['Operating cost', `2% × ${fmt(loan)}`, money(-op), 'neg'],
+      ['Expected credit loss', `model PD × LGD × loan = ${pct(r.pd)} × 60% × ${fmt(loan)}`, money(-ecl), 'neg'],
+    ].map(([k, f, v, c]) => `<tr><td>${k}<span class="f">${f}</span></td><td class="${c}">${v}</td></tr>`).join('') +
+      `<tr class="total"><td>Expected net profit${approve ? '' : ' (if it were approved)'}<span class="f">revenue − funding − operating − expected loss</span></td><td class="${net >= 0 ? 'pos' : 'neg'}">${money(net)}</td></tr>`;
+  } else {
+    $('profitTable').innerHTML = '<tr><td>Enter a loan amount to see the profit calculation.</td><td></td></tr>';
+  }
+
+  // ---- score-band table
+  $('bandRows').innerHTML = DATA.bands.map(b => {
+    const here = band && b.from === band.from, cut = b.from === CUTOFF;
+    const tags = (here ? '<span class="tag you">this applicant</span> ' : '') + (cut ? '<span class="tag cutoff">cutoff 600</span>' : '');
+    return `<tr class="${here ? 'here' : ''} ${cut ? 'cut' : ''}">
+      <td>${b.from}–${b.to}</td><td class="num">${fmt(b.n)}</td><td class="num">${(b.n / nTrain * 100).toFixed(1)}%</td><td class="num">${fmt(b.bad)}</td>
+      <td class="num">${b.n ? pct(b.bad / b.n) : '–'}</td><td class="num">${(b.approveIfCutoffHere * 100).toFixed(1)}%</td><td class="num">${pct(b.approvedBadRate)}</td><td>${tags}</td></tr>`;
+  }).join('');
+
+  $('rows').innerHTML = r.rows.map(row => {
+    const lost = row.b.points - row.best;
+    return `<tr>
+      <td><b>${row.m.label}</b><span class="code">${row.name}</span></td>
+      <td>${showValue(row.name, row.value)}</td>
+      <td><span class="bin">${row.b.label}</span></td>
+      <td class="num">${row.b.woe >= 0 ? '+' : ''}${row.b.woe.toFixed(4)}</td>
+      <td class="num">${row.m.coef.toFixed(4)}</td>
+      <td class="num pts">${row.b.points}</td>
+      <td class="barcell"><div class="bar"><i style="width:${Math.max(0, (row.b.points - 40) / 30 * 100).toFixed(0)}%"></i></div></td>
+      <td class="num">${lost === 0 ? '<span class="best">best</span>' : `<span class="lost">${lost}</span>`}</td>
+      <td class="why">${row.m.why}<span class="br">Training bad rate in this group: ${(row.b.badRate * 100).toFixed(1)}% (${fmt(row.b.n)} applicants)</span></td>
+    </tr>`;
+  }).join('');
+  const maxTotal = ORDER.reduce((s, n) => s + Math.max(...MODEL[n].bins.map(b => b.points)), 0);
+  $('rTotal').textContent = r.total;
+  $('rLost').innerHTML = `<span class="lost">${r.total - maxTotal}</span>`;
+  $('rTotalNote').textContent = `Highest possible score ${maxTotal}. Approve if 600 or more.`;
+
+  const ex = r.rows.reduce((a, b) => (b.b.points - b.best) < (a.b.points - a.best) ? b : a);
+  $('calc').textContent =
+`Points for one characteristic (the one losing most points here: ${ex.m.label})
+  = round( -Factor × coefficient × WOE + base points / 11 )
+  = round( -${FACTOR.toFixed(4)} × ${ex.m.coef.toFixed(4)} × (${ex.b.woe.toFixed(4)}) + ${BASE_EACH.toFixed(4)} )
+  = round( ${ex.raw.toFixed(3)} ) = ${ex.b.points}
+
+Score = ${r.rows.map(x => x.b.points).join(' + ')}
+      = ${r.total}  →  ${approve ? 'APPROVE (≥ 600)' : 'DECLINE (< 600)'}
+
+Model PD (logistic regression)
+  logit = intercept + Σ coefficient × WOE
+        = ${INTERCEPT.toFixed(4)} + ${(r.logit - INTERCEPT).toFixed(4)} = ${r.logit.toFixed(4)}
+  PD    = 1 / (1 + e^(−logit)) = ${(r.pd * 100).toFixed(2)}%
+
+Odds implied by the score
+  bad : good = e^((Offset − score) / Factor)
+             = e^((${OFFSET.toFixed(3)} − ${r.total}) / ${FACTOR.toFixed(3)}) = 1 : ${(1 / r.odds).toFixed(2)}`;
+}
+
+$('scaleTable').innerHTML = [
+  ['Target score / odds', `600 at 1 : ${(1 / DATA.ODDS0).toFixed(2)} (bad : good)`],
+  ['Points to double the odds (PDO)', '20'],
+  ['Factor = PDO / ln 2', FACTOR.toFixed(4)],
+  ['Offset = 600 + Factor × ln(odds)', OFFSET.toFixed(4)],
+  ['Intercept', INTERCEPT.toFixed(4)],
+  ['Base points = Offset − Factor × intercept', (BASE_EACH * 11).toFixed(4)],
+  ['Base points per characteristic (÷ 11)', BASE_EACH.toFixed(4)],
+  ['Training approval rate at 600', (DATA.trainApproval * 100).toFixed(1) + '%'],
+].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+$('policyNote').textContent =
+  `At the 600 cutoff the final scorecard approves ${(DATA.policy.train.approval * 100).toFixed(1)}% of training applicants with an approved bad rate of ` +
+  `${(DATA.policy.train.badRate * 100).toFixed(2)}%, and ${(DATA.policy.test.approval * 100).toFixed(1)}% of test applicants at ` +
+  `${(DATA.policy.test.badRate * 100).toFixed(2)}% (the same figures as Step 7, section 7.6). Bands are 10 points wide; the line in the chart above plots the observed bad rate column.`;
+
+// ---------------- example applications
+const PRESETS = {
+  approved: { name: 'APP-001 (approved)', loan: 575000, goods: 500000, goodsMissing: false, incomeType: 'Working', occupation: 'Core staff',
+              education: 'Secondary / secondary special', empYears: 10, notEmployed: false, noBureau: false, totalCredits: 5, activeCredits: 2,
+              newestAge: 1.2, oldestAge: 6, activeDebt: 165000, activeCreditAmt: 300000, microloans: 0 },
+  borderline: { name: 'APP-002 (borderline)', loan: 575000, goods: 500000, goodsMissing: false, incomeType: 'Working', occupation: 'Sales staff',
+              education: 'Secondary / secondary special', empYears: 5, notEmployed: false, noBureau: false, totalCredits: 5, activeCredits: 2,
+              newestAge: 0.5, oldestAge: 4, activeDebt: 180000, activeCreditAmt: 300000, microloans: 0 },
+  declined: { name: 'APP-003 (declined)', loan: 575000, goods: 500000, goodsMissing: false, incomeType: 'Working', occupation: 'Sales staff',
+              education: 'Secondary / secondary special', empYears: 2, notEmployed: false, noBureau: false, totalCredits: 5, activeCredits: 3,
+              newestAge: 0.5, oldestAge: 4, activeDebt: 255000, activeCreditAmt: 300000, microloans: 0 },
+  thin: { name: 'APP-004 (no bureau record)', loan: 450000, goods: 450000, goodsMissing: false, incomeType: 'Working', occupation: 'Core staff',
+              education: 'Secondary / secondary special', empYears: 3, notEmployed: false, noBureau: true, totalCredits: '', activeCredits: '',
+              newestAge: '', oldestAge: '', activeDebt: '', activeCreditAmt: '', microloans: '' },
+};
+function applyPreset(key) {
+  for (const [k, v] of Object.entries(PRESETS[key])) { const el = $(k); if (el.type === 'checkbox') el.checked = v; else el.value = v; }
+  document.querySelectorAll('[data-preset]').forEach(b => b.classList.toggle('active', b.dataset.preset === key));
+  render();
+}
+document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', () => {
+  document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active')); render();
+}));
+applyPreset('borderline');
+</script>
+</body>
+</html>
